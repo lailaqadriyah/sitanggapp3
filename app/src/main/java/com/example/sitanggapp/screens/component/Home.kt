@@ -106,10 +106,9 @@ fun HomeScreen() {
                         role = "Developer"
                     )
 
-                    // Team Member 3
                     TeamMemberItem(
                         name = "Varissa Anzani Badri",
-                        role = "Developer"
+                        role = "Developers"
                     )
                 }
             }
