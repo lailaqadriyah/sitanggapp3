@@ -1,0 +1,61 @@
+package com.example.sitanggapp.data.repository
+
+//import com.example.storyapp.data.pref.UserModel
+//import com.example.storyapp.data.pref.UserPreference
+//import com.example.storyapp.data.remote.response.DetailStoryResponse
+//import com.example.storyapp.data.remote.response.LoginResponse
+//import com.example.storyapp.data.remote.response.RegisterResponse
+//import com.example.storyapp.data.remote.response.StoriesResponse
+//import com.example.storyapp.data.remote.response.StoryResponse
+//import com.example.storyapp.data.remote.retrofit.ApiService
+import com.example.sitanggapp.data.pref.UserModel
+import com.example.sitanggapp.data.pref.UserPreference
+import com.example.sitanggapp.data.remote.response.LoginResponse
+import com.example.sitanggapp.data.remote.response.RegisterResponse
+import com.example.sitanggapp.data.remote.retrofit.ApiService
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import retrofit2.HttpException
+
+class UserRepository<RegisterResponse> private constructor(
+    private val apiService: ApiService,
+    private val userPreference: UserPreference
+) {
+    suspend fun register(name: String, email: String, password: String): com.example.sitanggapp.data.remote.response.RegisterResponse {
+        return apiService.register(name, email, password)
+    }
+
+    suspend fun login(email: String, password: String): LoginResponse {
+        return apiService.login(email, password)
+    }
+
+    suspend fun saveSession(user: UserModel) {
+        userPreference.saveSession(user)
+    }
+
+    fun getSession(): Flow<UserModel> {
+        return userPreference.getSession()
+    }
+
+    suspend fun logout() {
+        userPreference.logout()
+    }
+
+    private fun getToken(): String {
+        return runBlocking { userPreference.getSession().first().token }
+    }
+    companion object {
+        @Volatile
+        private var instance: UserRepository<Any?>? = null
+        fun getInstance(
+            apiService: ApiService,
+            userPreference: UserPreference
+        ): UserRepository<Any?> =
+            instance ?: synchronized(this) {
+                instance ?: UserRepository(apiService, userPreference)
+            }.also { instance = it }
+    }
+}
