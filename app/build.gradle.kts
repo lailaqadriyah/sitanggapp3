@@ -53,6 +53,18 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("androidx.compose.animation:animation:1.6.0")
     implementation("com.google.accompanist:accompanist-navigation-animation:0.32.0")
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+
+    // Networking
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.okhttp.logging.interceptor)
+
+    // Image Loading
+    implementation(libs.coil.compose)
+
+    // DataStore
+    implementation(libs.androidx.datastore.preferences)
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
@@ -61,4 +73,6 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+
 }
