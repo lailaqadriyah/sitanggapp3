@@ -8,7 +8,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object ApiConfig {
-    private const val BASE_URL = "https://story-api.dicoding.dev/v1/"
+    private const val BASE_URL = "https://hqpngcbn-3000.asse.devtunnels.ms/"
 
     fun getApiService(token: String? = null): ApiService {
         val loggingInterceptor = HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY)

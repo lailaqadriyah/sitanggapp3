@@ -12,16 +12,26 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
+import com.example.sitanggapp.ui.viewmodel.AuthViewModel
+import com.example.sitanggapp.ui.viewmodel.ViewModelFactory
 
 @Composable
-fun LoginScreen(navController: NavHostController) {
+fun LoginScreen(navController: NavHostController? = null,
+                viewModelFactory: ViewModelFactory
+) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
+    val viewModel: AuthViewModel = viewModel(factory = viewModelFactory)
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -58,14 +68,23 @@ fun LoginScreen(navController: NavHostController) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        Button(onClick = {
-            // TODO: auth logic, berhasil -> navigate home
-            navController.navigate("home") {
-                // clear backstack jika perlu
-                popUpTo("landing") { inclusive = true }
-            }
-        }, modifier = Modifier.fillMaxWidth().height(48.dp)) {
+        Button(
+            onClick = {
+                // TODO: auth logic
+                viewModel.login(username, password, context = context)
+
+            },
+            modifier = Modifier.fillMaxWidth().height(48.dp)
+        ) {
             Text("Masuk")
         }
     }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun PreviewLoginScreen() {
+    val navController = rememberNavController()
+    val viewModelFactory = ViewModelFactory.getInstance(navController.context)
+LoginScreen(navController = navController, viewModelFactory =viewModelFactory )
 }

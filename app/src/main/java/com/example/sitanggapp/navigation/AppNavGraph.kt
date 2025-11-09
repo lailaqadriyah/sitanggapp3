@@ -12,9 +12,10 @@ import com.example.sitanggapp.screens.saran.CreateSaranScreen
 import com.example.sitanggapp.screens.saran.SaranScreen
 import com.example.sitanggapp.screens.auth.SplashScreen
 import com.example.sitanggapp.screens.profile.*
+import com.example.sitanggapp.ui.viewmodel.ViewModelFactory
 
 @Composable
-fun AppNavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
+fun AppNavGraph(navController: NavHostController, modifier: Modifier = Modifier, viewModelFactory: ViewModelFactory) {
     NavHost(
         navController = navController,
         startDestination = "splash", // mulai dari Splash
@@ -24,7 +25,7 @@ fun AppNavGraph(navController: NavHostController, modifier: Modifier = Modifier)
         composable("splash") { SplashScreen(navController) }
         composable("register") { RegisterOptionScreen(navController) }
         composable("register_success") { RegisterSuccessScreen(navController) }
-        composable("login") { LoginScreen(navController) }
+        composable("login") { LoginScreen(navController, viewModelFactory =viewModelFactory) }
 
         // ====== HALAMAN UTAMA ======
         composable("home") { HomeScreen() }
