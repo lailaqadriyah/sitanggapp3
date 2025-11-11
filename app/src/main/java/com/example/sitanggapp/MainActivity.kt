@@ -19,6 +19,7 @@ import androidx.navigation.NavHostController
 import com.example.sitanggapp.navigation.AppNavGraph
 import com.example.sitanggapp.ui.theme.DarkBlue
 import com.example.sitanggapp.ui.theme.SitanggappTheme
+import com.example.sitanggapp.ui.viewmodel.ViewModelFactory
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -92,8 +93,20 @@ fun Sitanggapp() {
     ) { innerPadding ->
         AppNavGraph(
             navController = navController,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
+            viewModelFactory= ViewModelFactory.getInstance(navController.context)
         )
+    }
+}
+
+@Preview (
+    showBackground = true,
+    showSystemUi = true
+)
+@Composable
+fun SitanggappPreview() {
+    SitanggappTheme {
+        Sitanggapp()
     }
 }
 
