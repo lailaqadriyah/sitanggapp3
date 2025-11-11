@@ -12,7 +12,9 @@ import com.example.sitanggapp.screens.component.HomeScreen
 import com.example.sitanggapp.screens.saran.CreateSaranScreen
 //import com.example.sitanggapp.screens.ProfileScreen
 import com.example.sitanggapp.screens.pengaduan.CreatePengaduanScreen
+import com.example.sitanggapp.screens.pengaduan.ListPengaduanScreen
 import com.example.sitanggapp.screens.saran.SaranScreen
+
 
 @Composable
 fun AppNavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
@@ -22,9 +24,18 @@ fun AppNavGraph(navController: NavHostController, modifier: Modifier = Modifier)
         modifier = modifier
     ) {
         composable("home") { HomeScreen() }
-        composable("pengaduan") { CreatePengaduanScreen()}
+        composable("pengaduan") {
+            CreatePengaduanScreen(navController = navController)
+        }
         composable("saran") { CreateSaranScreen(modifier, navController) }
 //        composable("profile") { ProfileScreen() }
         composable("listsaran") { SaranScreen() }
+        composable("listpengaduan") {
+            ListPengaduanScreen(navController = navController)
+        }
+        composable("tambahPengaduan") {
+            CreatePengaduanScreen(navController = navController)
+        }
+
     }
 }

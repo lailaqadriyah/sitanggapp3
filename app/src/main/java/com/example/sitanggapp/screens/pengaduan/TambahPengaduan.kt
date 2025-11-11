@@ -1,10 +1,15 @@
 package com.example.sitanggapp.screens.pengaduan
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,130 +17,217 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.compose.material3.Text
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.sitanggapp.R
-import com.example.sitanggapp.navigation.AppNavGraph
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreatePengaduanScreen(navController: NavController? = null) {
-    var jenisMasalah by remember { mutableStateOf("") }
-    var tanggal by remember { mutableStateOf("") }
-    var deskripsi by remember { mutableStateOf("") }
+fun CreatePengaduanScreen(
+    modifier: Modifier = Modifier,
+    navController: NavController? = null,
+    pengaduanId: String? = null // 🟢 Tambahan untuk edit laporan
+) {
+    // 🟢 Simulasi data lama (kalau sedang edit)
+    val existingData = remember {
+        if (pengaduanId != null) {
+            mapOf(
+                "jenisMasalah" to "Lampu Jalan Mati",
+                "tanggal" to "27 Oktober 2025",
+                "deskripsi" to "Lampu jalan di depan kampus padam sejak 3 hari lalu"
+            )
+        } else null
+    }
 
-    val navController = rememberNavController()
-    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
-    val scope = rememberCoroutineScope()
+    var jenisMasalah by remember { mutableStateOf(existingData?.get("jenisMasalah") ?: "") }
+    var tanggal by remember { mutableStateOf(existingData?.get("tanggal") ?: "") }
+    var deskripsi by remember { mutableStateOf(existingData?.get("deskripsi") ?: "") }
+
+    val scrollState = rememberScrollState()
+
+    val darkBlue = Color(0xFF003366)
+    val orange = Color(0xFFFF9800)
+    val borderColor = Color(0xFFE0E0E0)
 
     Scaffold(
         topBar = {
-            // ✅ Gunakan bawaan Material3, tidak perlu bikin ulang fungsi SmallTopAppBar
-            TopAppBar(
-                title = { Text("Laporan Fasilitas Rusak", fontWeight = FontWeight.Bold) },
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        if (pengaduanId != null) "Edit Laporan" else "Laporan Fasilitas Rusak", // 🟢 Judul dinamis
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 18.sp,
+                        color = Color.Black
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController?.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Kembali")
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Kembali",
+                            tint = Color.Black
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
-
-        }
-    ) { padding ->
+        },
+        containerColor = Color.White
+    ) { paddingValues ->
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(paddingValues)
+                .verticalScroll(scrollState)
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Input Jenis Masalah
-            OutlinedTextField(
-                value = jenisMasalah,
-                onValueChange = { jenisMasalah = it },
-                label = { Text("Jenis Masalah") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            // Jenis Masalah
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    "Jenis Masalah",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Black,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                OutlinedTextField(
+                    value = jenisMasalah,
+                    onValueChange = { jenisMasalah = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = RoundedCornerShape(8.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = borderColor,
+                        focusedBorderColor = darkBlue
+                    )
+                )
+            }
 
-            // Input Tanggal
-            OutlinedTextField(
-                value = tanggal,
-                onValueChange = { tanggal = it },
-                label = { Text("Hari/Tanggal") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            // Hari/Tanggal
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    "Hari/Tanggal",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Black,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                OutlinedTextField(
+                    value = tanggal,
+                    onValueChange = { tanggal = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = RoundedCornerShape(8.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = borderColor,
+                        focusedBorderColor = darkBlue
+                    )
+                )
+            }
 
-            // Input Deskripsi
-            OutlinedTextField(
-                value = deskripsi,
-                onValueChange = { deskripsi = it },
-                label = { Text("Deskripsi") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp)
-            )
-
-            // Upload Foto
-            Text("Upload Foto", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Button(
-                    onClick = { /* TODO: Ambil foto */ },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEDEDED))
-                ) {
-                    Text("Ambil Foto", color = Color.Black)
-                }
-                Button(
-                    onClick = { /* TODO: Pilih dari galeri */ },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEDEDED))
-                ) {
-                    Text("Pilih dari Galeri", color = Color.Black)
-                }
+            // Deskripsi
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    "Deskripsi",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Black,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                OutlinedTextField(
+                    value = deskripsi,
+                    onValueChange = { deskripsi = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(100.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = borderColor,
+                        focusedBorderColor = darkBlue
+                    )
+                )
             }
 
             // Lokasi
-            Text("Lokasi", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Box(
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    "Lokasi",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Black,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xFFE8F4F8))
+                        .border(BorderStroke(1.dp, borderColor), RoundedCornerShape(8.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            Icons.Default.LocationOn,
+                            contentDescription = "Peta Placeholder",
+                            tint = Color(0xFF0288D1),
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "Peta Lokasi",
+                            color = Color.Gray,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Button(
+                    onClick = { /* TODO: Gunakan lokasi saya */ },
+                    colors = ButtonDefaults.buttonColors(containerColor = darkBlue),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                ) {
+                    Text(
+                        "Gunakan lokasi saya",
+                        color = Color.White,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 🟢 Tombol dinamis: Kirim atau Simpan Perubahan
+            Button(
+                onClick = {
+                    navController?.navigate("listpengaduan") {
+                        popUpTo("listpengaduan") { inclusive = true }
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = orange),
+                shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFFE0E0E0)),
-                contentAlignment = Alignment.Center
+                    .height(52.dp)
             ) {
-                Text("Peta belum tersedia", color = Color.Gray)
-            }
-
-            Button(
-                onClick = { /* TODO: Gunakan lokasi saya */ },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF002B5B)),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Gunakan Lokasi Saya", color = Color.White)
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Tombol Kirim
-            Button(
-                onClick = { navController.navigate("listsaran") },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFA500)),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Kirim Laporan", color = Color.White)
+                Text(
+                    if (pengaduanId != null) "Simpan Perubahan" else "Kirim Laporan",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }
