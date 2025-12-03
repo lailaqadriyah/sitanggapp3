@@ -65,16 +65,16 @@ fun SaranScreen() {
         ListSaran(
             list = listOf(
                 Pair(
-                    "Tambah Fitur Dark Mode",
-                    "Agar pengguna dapat menggunakan aplikasi dengan nyaman di malam hari."
+                    "Lampu merah rusak",
+                    "Terjadi kerusakan pada lampu merah bypass UNAND yang mengakibatkan kemacetan parah ."
                 ),
                 Pair(
-                    "Integrasi dengan Media Sosial",
-                    "Memudahkan berbagi laporan ke platform sosial."
+                    "Jalan Raya berlubang",
+                    "Terjadi kerusakan pada jalan raya yang mengakibatkan kecelakaan yang serius."
                 ),
                 Pair(
-                    "Notifikasi Real-time",
-                    "Memberikan update langsung tentang status laporan pengguna."
+                    "Penumpukan sampah di pasar raya",
+                    "Terjadi penumpukan sampah di pasar raya yang mengakibatkan masalah kebersihan."
                 ),
             )
         )

@@ -21,20 +21,29 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateSaranScreen(
     modifier: Modifier = Modifier,
-    navController: NavController? = null
+    navController: NavController? = null,
+    saranId: String? = null
 ) {
+    val existingData = remember {
+        if (saranId != null) {
+            mapOf(
+                "jenisMasalah" to "Lampu Jalan Mati",
+                "tanggal" to "27 Oktober 2025",
+                "deskripsi" to "Lampu jalan di depan kampus padam sejak 3 hari lalu"
+            )
+        } else null
+    }
     var jenisMasalah by remember { mutableStateOf("") }
     var tanggal by remember { mutableStateOf("") }
     var deskripsi by remember { mutableStateOf("") }
+
     val scrollState = rememberScrollState()
 
-    // Warna yang digunakan
     val darkBlue = Color(0xFF003366)
     val orange = Color(0xFFFF9800)
     val borderColor = Color(0xFFE0E0E0)
@@ -44,7 +53,7 @@ fun CreateSaranScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        "Aspirasi dan Saran",
+                        if (saranId != null) "Edit Saran" else "Aspirasi dan Saran",
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 18.sp,
                         color = Color.Black
@@ -59,9 +68,7 @@ fun CreateSaranScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
         },
         containerColor = Color.White
@@ -69,9 +76,13 @@ fun CreateSaranScreen(
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(scrollState)
-                .padding(horizontal = 16.dp, vertical = 16.dp),
+                .padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = paddingValues.calculateTopPadding(),
+                    bottom = 16.dp
+                )
+                .verticalScroll(scrollState),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Jenis Masalah
@@ -91,9 +102,7 @@ fun CreateSaranScreen(
                     shape = RoundedCornerShape(8.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedBorderColor = borderColor,
-                        focusedBorderColor = darkBlue,
-                        unfocusedContainerColor = Color.White,
-                        focusedContainerColor = Color.White
+                        focusedBorderColor = darkBlue
                     )
                 )
             }
@@ -115,9 +124,7 @@ fun CreateSaranScreen(
                     shape = RoundedCornerShape(8.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedBorderColor = borderColor,
-                        focusedBorderColor = darkBlue,
-                        unfocusedContainerColor = Color.White,
-                        focusedContainerColor = Color.White
+                        focusedBorderColor = darkBlue
                     )
                 )
             }
@@ -140,9 +147,7 @@ fun CreateSaranScreen(
                     shape = RoundedCornerShape(8.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedBorderColor = borderColor,
-                        focusedBorderColor = darkBlue,
-                        unfocusedContainerColor = Color.White,
-                        focusedContainerColor = Color.White
+                        focusedBorderColor = darkBlue
                     )
                 )
             }
@@ -172,8 +177,9 @@ fun CreateSaranScreen(
                         shape = RoundedCornerShape(8.dp),
                         border = BorderStroke(1.dp, borderColor)
                     ) {
-                        Text("Ambil foto", fontSize = 14.sp)
+                        Text("Ambil Foto", fontSize = 14.sp)
                     }
+
                     OutlinedButton(
                         onClick = { /* TODO: Pilih dari galeri */ },
                         modifier = Modifier
@@ -249,9 +255,12 @@ fun CreateSaranScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Tombol Kirim
             Button(
                 onClick = {
-                    navController?.navigate("listsaran")
+                    navController?.navigate("listsaran") {
+                        popUpTo("listsaran") { inclusive = true }
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = orange),
                 shape = RoundedCornerShape(8.dp),
@@ -266,9 +275,6 @@ fun CreateSaranScreen(
                     fontWeight = FontWeight.SemiBold
                 )
             }
-
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

@@ -15,12 +15,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.NavHostController
 import com.example.sitanggapp.navigation.AppNavGraph
 import com.example.sitanggapp.ui.theme.DarkBlue
 import com.example.sitanggapp.ui.theme.SitanggappTheme
 import com.example.sitanggapp.ui.viewmodel.ViewModelFactory
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
