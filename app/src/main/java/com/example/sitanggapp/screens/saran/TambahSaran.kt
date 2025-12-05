@@ -20,14 +20,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.sitanggapp.ui.viewmodel.SaranViewModel
+import com.example.sitanggapp.ui.viewmodel.ViewModelFactory
+import kotlinx.coroutines.flow.callbackFlow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateSaranScreen(
     modifier: Modifier = Modifier,
     navController: NavController? = null,
-    saranId: String? = null
+    saranId: String? = null,
+    viewModelFactory: ViewModelFactory
 ) {
     val existingData = remember {
         if (saranId != null) {
@@ -42,8 +47,14 @@ fun CreateSaranScreen(
     var tanggal by remember { mutableStateOf("") }
     var deskripsi by remember { mutableStateOf("") }
 
-    val scrollState = rememberScrollState()
+    val viewModel: SaranViewModel = viewModel(factory = viewModelFactory)
 
+    val scrollState = rememberScrollState()
+    val callback: () -> Unit = {
+        navController?.navigate("listsaran") {
+            popUpTo("listsaran") { inclusive = true }
+        }
+    }
     val darkBlue = Color(0xFF003366)
     val orange = Color(0xFFFF9800)
     val borderColor = Color(0xFFE0E0E0)
@@ -258,9 +269,8 @@ fun CreateSaranScreen(
             // Tombol Kirim
             Button(
                 onClick = {
-                    navController?.navigate("listsaran") {
-                        popUpTo("listsaran") { inclusive = true }
-                    }
+
+                    viewModel.uploadSaran(judul = jenisMasalah , deskripsi = deskripsi, latitude = null, longitude = null, foto = null, navController = navController )
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = orange),
                 shape = RoundedCornerShape(8.dp),
@@ -277,10 +287,6 @@ fun CreateSaranScreen(
             }
         }
     }
+
 }
 
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun PreviewCreateSaranScreen() {
-    CreateSaranScreen()
-}

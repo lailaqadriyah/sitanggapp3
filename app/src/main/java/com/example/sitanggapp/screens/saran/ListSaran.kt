@@ -1,255 +1,327 @@
 package com.example.sitanggapp.screens.saran
 
+import android.content.Intent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.ModalBottomSheetDefaults
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.sitanggapp.AddSaranActivity
+import com.example.sitanggapp.data.remote.response.SaranResponse
 import com.example.sitanggapp.ui.theme.SitanggappTheme
-import kotlinx.coroutines.launch
+import com.example.sitanggapp.ui.viewmodel.SaranViewModel
+import com.example.sitanggapp.ui.viewmodel.ViewModelFactory
 
 @Composable
-fun Layout(modifier: Modifier, children: @Composable () -> Unit) {
-    Column(
-        modifier = modifier
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        children()
+fun SaranScreen(
+    viewModel: SaranViewModel = viewModel(
+        factory = ViewModelFactory.getInstance(LocalContext.current)
+    )
+) {
+    val context = LocalContext.current
+
+    // Gunakan LaunchedEffect untuk memanggil data sekali saja saat UI pertama kali dibuat
+    LaunchedEffect(Unit) {
+        viewModel.getSaran()
     }
-}
 
-@Composable
-fun SaranScreen() {
-    Layout(modifier = Modifier) {
-        ListSaran(
-            list = listOf(
-                Pair(
-                    "Lampu merah rusak",
-                    "Terjadi kerusakan pada lampu merah bypass UNAND yang mengakibatkan kemacetan parah ."
-                ),
-                Pair(
-                    "Jalan Raya berlubang",
-                    "Terjadi kerusakan pada jalan raya yang mengakibatkan kecelakaan yang serius."
-                ),
-                Pair(
-                    "Penumpukan sampah di pasar raya",
-                    "Terjadi penumpukan sampah di pasar raya yang mengakibatkan masalah kebersihan."
-                ),
-            )
+    val listSaran by viewModel.listSaran.observeAsState(initial = emptyList())
+    val isLoading by viewModel.isLoading.observeAsState(initial = false)
+
+    // State untuk menyimpan ID yang sedang ingin dihapus
+    var idToDelete by remember { mutableStateOf<Int?>(null) }
+
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    // Navigasi ke halaman Tambah Saran
+                    val intent = Intent(context, AddSaranActivity::class.java)
+                    context.startActivity(intent)
+                },
+                containerColor = Color(0xFFFF9800), // Warna Oranye
+                contentColor = Color.White
+            ) {
+                Icon(imageVector = Icons.Default.Add, contentDescription = "Tambah Saran")
+            }
+        }
+    ) { paddingValues ->
+
+        // Container Utama
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues) // Penting agar tidak tertutup status bar/bottom bar
+                .padding(horizontal = 20.dp)
+        ) {
+            if (isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Color(0xFFFF9800))
+                }
+            } else {
+                Column {
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Text(
+                        text = "Daftar Saran",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    if (listSaran.isEmpty()) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(text = "Belum ada saran", color = Color.Gray)
+                        }
+                    } else {
+                        // ListSaranContent menggunakan LazyColumn agar bisa discroll
+                        ListSaranContent(
+                            list = listSaran,
+                            onDeleteRequest = { id -> idToDelete = id }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // Tampilkan Alert Hapus jika idToDelete tidak null
+    if (idToDelete != null) {
+        AlertHapus(
+            onCancel = { idToDelete = null },
+            onConfirm = {
+                idToDelete?.let { id ->
+                    // --- PERBAIKANNYA DI SINI ---
+                    // Menggunakan argumen bernama untuk semua parameter yang dibutuhkan
+                    viewModel.deleteSaran(
+                        id = id,
+                        onSuccess = {
+                            // Setelah sukses delete dari API, refresh list
+                            viewModel.getSaran()
+                        },
+                        onError = { errorMessage ->
+                            // TODO: Tampilkan pesan error ke pengguna, misalnya dengan Toast atau Snackbar
+                            println("Error deleting saran: $errorMessage")
+                        }
+                    )
+                    // --------------------------
+                }
+                idToDelete = null
+            }
         )
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+// === FUNGSI YANG BARU DITAMBAHKAN ===
 @Composable
-fun SaranCard(title: String, description: String) {
-    var showAlert by remember { mutableStateOf(false) } // ← Tambah state
-
-    Box(
-        modifier = Modifier
-            .background(color = Color.White, shape = RoundedCornerShape(10.dp))
+fun ListSaranContent(
+    list: List<SaranResponse>,
+    onDeleteRequest: (Int) -> Unit
+) {
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(bottom = 80.dp) // Beri ruang untuk FAB
     ) {
-        Column(
+        items(list, key = { it.idSaran ?: -1 }) { saran ->
+            SaranItem(
+                saran = saran,
+                onDeleteClick = {
+                    saran.idSaran?.let { id ->
+                        onDeleteRequest(id)
+                    }
+                }
+            )
+        }
+    }
+}
+
+// === FUNGSI YANG BARU DITAMBAHKAN ===
+@Composable
+fun SaranItem(
+    saran: SaranResponse,
+    onDeleteClick: () -> Unit
+) {
+    val darkBlue = Color(0xFF003366)
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        border = BorderStroke(1.dp, Color.LightGray)
+    ) {
+        Row(
             modifier = Modifier
-                .padding(10.dp)
                 .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = title, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-            Text(text = description, maxLines = 3, overflow = TextOverflow.Ellipsis)
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                ButtonTransparent(Icons.Default.Edit, onLick = {}, contentDescription = "Edit")
-                ButtonTransparent(
-                    Icons.Default.Delete,
-                    onLick = { showAlert = true }, // ← saat delete diklik, tampilkan alert
-                    contentDescription = "Delete"
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = saran.judul ?: "Tanpa Judul",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = darkBlue,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = saran.deskripsi ?: "Tidak ada deskripsi",
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
-        }
-    }
-
-    // Jika showAlert true, tampilkan AlertBottomContentPreview
-    if (showAlert) {
-        AlertBottomContentPreview(
-            onCancel = { showAlert = false }, // Tutup saat "Tidak"
-            onConfirm = {
-                showAlert = false
-                // Di sini bisa tambahkan logika hapus data nanti
+            Spacer(modifier = Modifier.width(16.dp))
+            Row {
+                IconButton(onClick = { /* TODO: Implementasi edit */ }) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit Saran",
+                        tint = Color.Gray
+                    )
+                }
+                IconButton(onClick = onDeleteClick) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Hapus Saran",
+                        tint = Color.Red
+                    )
+                }
             }
-        )
-    }
-}
-
-
-@Composable
-fun ButtonTransparent(imageVector: ImageVector, onLick: () -> Unit, contentDescription: String) {
-    Button(
-        onClick = onLick, colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent,
-            contentColor = Color.Black
-        )
-    ) {
-        Icon(imageVector = imageVector, contentDescription = contentDescription)
-    }
-}
-
-@Composable
-fun ListSaran(list: List<Pair<String, String>>) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        for (saran in list) {
-            SaranCard(title = saran.first, description = saran.second)
         }
     }
 }
 
+
+// Ubah nama AlertBottomContentPreview menjadi AlertHapus agar lebih jelas
 @Composable
-fun AlertBottomContentPreview(
-    onCancel: () -> Unit = {},
-    onConfirm: () -> Unit = {}
+fun AlertHapus(
+    onCancel: () -> Unit,
+    onConfirm: () -> Unit
 ) {
-    // Ini cuma wrapper untuk simulasi posisi dari bawah
+    // Overlay semi-transparan
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0x80000000)) // abu transparan (background blur)
-            .padding(top = 400.dp) // seolah muncul dari bawah
+            .background(Color(0x80000000)),
+        contentAlignment = Alignment.Center
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                .padding(horizontal = 20.dp)
+                .clip(RoundedCornerShape(24.dp))
                 .background(Color.White)
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+                .padding(horizontal = 24.dp, vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // --- Ikon Peringatan ---
             Box(
                 modifier = Modifier
-                    .size(140.dp)
-                    .padding(top = 8.dp),
+                    .size(80.dp)
+                    .padding(bottom = 16.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     drawCircle(
-                        color = Color(0xFFFFB74D),
+                        color = Color(0xFFFFF3E0),
                         radius = size.minDimension / 2
                     )
                 }
-
                 Icon(
                     imageVector = Icons.Default.Warning,
                     contentDescription = null,
-                    tint = Color(0xFFFFA000),
-                    modifier = Modifier.size(60.dp)
+                    tint = Color(0xFFFF9800),
+                    modifier = Modifier.size(40.dp)
                 )
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // --- Teks Konfirmasi ---
             Text(
                 text = "Kamu yakin ingin menghapus?",
                 fontSize = 18.sp,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.SemiBold,
                 color = Color.Black
             )
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            // --- Tombol Tidak ---
-            Button(
-                onClick = onCancel,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFFA000),
-                    contentColor = Color.White
-                ),
-                shape = RoundedCornerShape(50),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-            ) {
-                Text("Tidak", fontSize = 16.sp)
+            Text(
+                text = "Data yang dihapus tidak dapat dikembalikan.",
+                fontSize = 14.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(top = 8.dp, bottom = 24.dp)
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(
+                    onClick = onConfirm, // Langsung panggil onConfirm
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFF9800),
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                ) {
+                    Text("Ya, Hapus", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                }
+                OutlinedButton(
+                    onClick = onCancel, // Langsung panggil onCancel
+                    border = BorderStroke(1.dp, Color(0xFFFF9800)),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                ) {
+                    Text("Batal", fontSize = 16.sp, color = Color(0xFFFF9800))
+                }
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // --- Tombol Ya ---
-            OutlinedButton(
-                onClick = onConfirm,
-                border = BorderStroke(1.dp, Color(0xFFFFA000)),
-                shape = RoundedCornerShape(50),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-            ) {
-                Text("Ya", fontSize = 16.sp, color = Color(0xFFFFA000))
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun PreviewAlertBottom() {
-    AlertBottomContentPreview()
-}
-
-
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun PreviewSaranScreen() {
-    SaranScreenPreview()
-}
-
 @Preview(showBackground = true)
 @Composable
-fun SaranScreenPreview() {
+fun PreviewSaranScreen() {
     SitanggappTheme {
         SaranScreen()
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+fun PreviewSaranItem() {
+    SitanggappTheme {
+        SaranItem(
+            saran = SaranResponse(1, "Lampu Merah Padam di Perempatan", "Lampu merah di perempatan ABC sudah padam selama 2 hari dan menyebabkan kemacetan parah."),
+            onDeleteClick = {}
+        )
+    }
+}
 
+@Preview
+@Composable
+fun PreviewAlertHapus() {
+    SitanggappTheme {
+        AlertHapus(onCancel = {}, onConfirm = {})
+    }
+}

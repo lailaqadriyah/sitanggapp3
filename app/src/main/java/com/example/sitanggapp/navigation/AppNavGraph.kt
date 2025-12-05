@@ -25,7 +25,7 @@ fun AppNavGraph(
     ) {
         composable("home") { HomeScreen() }
         composable("pengaduan") { CreatePengaduanScreen()}
-        composable("saran") { CreateSaranScreen(modifier, navController) }
+        composable("saran") { CreateSaranScreen(modifier, navController= navController, viewModelFactory = viewModelFactory) }
         composable("profile") { TampilanProfile(navController) }
         composable("listsaran") { SaranScreen() }
     }

@@ -10,10 +10,12 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
+// Extension property untuk membuat DataStore
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "session")
 
 class UserPreference private constructor(private val dataStore: DataStore<Preferences>) {
 
+    // Simpan user session (model user sederhana)
     suspend fun saveSession(user: UserModel) {
         dataStore.edit { preferences ->
             preferences[EMAIL_KEY] = user.email
@@ -22,16 +24,18 @@ class UserPreference private constructor(private val dataStore: DataStore<Prefer
         }
     }
 
+    // Ambil data session sebagai Flow (real-time update)
     fun getSession(): Flow<UserModel> {
         return dataStore.data.map { preferences ->
             UserModel(
-                preferences[EMAIL_KEY] ?: "",
-                preferences[TOKEN_KEY] ?: "",
-                preferences[IS_LOGIN_KEY] ?: false
+                email = preferences[EMAIL_KEY] ?: "",
+                token = preferences[TOKEN_KEY] ?: "",
+                isLogin = preferences[IS_LOGIN_KEY] ?: false
             )
         }
     }
 
+    // Hapus session (Logout)
     suspend fun logout() {
         dataStore.edit { preferences ->
             preferences.clear()

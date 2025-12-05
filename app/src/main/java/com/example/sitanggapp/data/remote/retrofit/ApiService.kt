@@ -2,19 +2,13 @@ package com.example.sitanggapp.data.remote.retrofit
 
 import com.example.sitanggapp.data.remote.response.LoginResponse
 import com.example.sitanggapp.data.remote.response.RegisterResponse
+import com.example.sitanggapp.data.remote.response.SaranResponse
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
-import retrofit2.http.Field
-import retrofit2.http.FormUrlEncoded
-import retrofit2.http.GET
-import retrofit2.http.Header
-import retrofit2.http.Multipart
-import retrofit2.http.POST
-import retrofit2.http.Part
-import retrofit2.http.Path
-import retrofit2.http.Query
+import retrofit2.Response
+import retrofit2.http.*
 
 interface ApiService {
+
     @FormUrlEncoded
     @POST("register")
     suspend fun register(
@@ -29,4 +23,25 @@ interface ApiService {
         @Field("email") email: String,
         @Field("password") password: String
     ): LoginResponse
+
+    // 1. GET All Saran
+    @GET("saran")
+    suspend fun getAllSaran(): Response<List<SaranResponse>>
+
+    // 2. POST Saran (Multipart karena ada upload foto)
+    @Multipart
+    @POST("saran")
+    suspend fun addSaran(
+        @Part("judul") judul: String,
+        @Part("deskripsi") deskripsi: String,
+        @Part("latitude") latitude: String? = null,
+        @Part("longitude") longitude: String? = null,
+        @Part foto: MultipartBody.Part?
+    ): Response<SaranResponse>
+
+    // 3. DELETE Saran
+    @DELETE("saran/{id}")
+    suspend fun deleteSaran(
+        @Path("id") id: Int
+    ): Response<SaranResponse>
 }

@@ -36,6 +36,14 @@ class UserRepository private constructor(
         userPreference.logout()
     }
 
+    suspend fun deleteSaran(id: Int) {
+        try {
+            apiService.deleteSaran(id)
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
     private fun getToken(): String {
         return runBlocking { userPreference.getSession().first().token }
     }
