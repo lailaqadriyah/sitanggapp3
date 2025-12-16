@@ -46,6 +46,25 @@ class SaranRepository(private val apiService: ApiService) {
             throw Exception("Failed to delete saran: ${response.message()}")
         }
     }
+    suspend fun updateSaran(
+        id: Int,
+        judul: String,
+        deskripsi: String,
+        latitude: String?,
+        longitude: String?,
+        foto: MultipartBody.Part?
+    ): SaranResponse {
+        // 1. TAMBAHKAN 'val response ='
+        // Pastikan juga kamu mengirimkan 'id' ke apiService jika endpoint membutuhkannya
+        val response: Response<SaranResponse> = apiService.updateSaran(id, judul, deskripsi, latitude, longitude, foto)
+
+        return if (response.isSuccessful) {
+            // 2. Perbaiki pesan error (sebelumnya "add saran", ubah jadi "update saran")
+            response.body() ?: throw Exception("Failed to update saran: empty body")
+        } else {
+            throw Exception("Failed to update saran: ${response.message()}")
+        }
+    }
 
     companion object {
         @Volatile

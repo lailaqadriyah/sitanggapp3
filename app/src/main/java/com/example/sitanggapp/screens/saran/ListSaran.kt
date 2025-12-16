@@ -27,7 +27,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.sitanggapp.AddSaranActivity
+import com.example.sitanggapp.screens.saran.CreateSaranScreen
 import com.example.sitanggapp.data.remote.response.SaranResponse
 import com.example.sitanggapp.ui.theme.SitanggappTheme
 import com.example.sitanggapp.ui.viewmodel.SaranViewModel
@@ -37,7 +40,8 @@ import com.example.sitanggapp.ui.viewmodel.ViewModelFactory
 fun SaranScreen(
     viewModel: SaranViewModel = viewModel(
         factory = ViewModelFactory.getInstance(LocalContext.current)
-    )
+    ),
+    navController: NavController
 ) {
     val context = LocalContext.current
 
@@ -56,9 +60,17 @@ fun SaranScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    // Navigasi ke halaman Tambah Saran
-                    val intent = Intent(context, AddSaranActivity::class.java)
-                    context.startActivity(intent)
+                    try {
+                        navController.navigate("tambahsaran") {
+                            // Optional: Add navigation options
+                            launchSingleTop = true
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        // Fallback to intent if navigation fails
+                        val intent = Intent(context, AddSaranActivity::class.java)
+                        context.startActivity(intent)
+                    }
                 },
                 containerColor = Color(0xFFFF9800), // Warna Oranye
                 contentColor = Color.White
@@ -72,7 +84,7 @@ fun SaranScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues) // Penting agar tidak tertutup status bar/bottom bar
+                .padding(paddingValues)
                 .padding(horizontal = 20.dp)
         ) {
             if (isLoading) {
@@ -94,10 +106,19 @@ fun SaranScreen(
                             Text(text = "Belum ada saran", color = Color.Gray)
                         }
                     } else {
-                        // ListSaranContent menggunakan LazyColumn agar bisa discroll
                         ListSaranContent(
                             list = listSaran,
-                            onDeleteRequest = { id -> idToDelete = id }
+                            onDeleteRequest = { id -> idToDelete = id },
+                            onEditRequest = { saran ->
+                                try {
+                                    // Navigasi ke EditSaran dengan ID saran
+                                    navController.navigate("editsaran/${saran.idSaran}")
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                    // Tampilkan pesan error atau lakukan penanganan lain
+                                    println("Gagal membuka halaman edit: ${e.message}")
+                                }
+                            }
                         )
                     }
                 }
@@ -105,26 +126,20 @@ fun SaranScreen(
         }
     }
 
-    // Tampilkan Alert Hapus jika idToDelete tidak null
     if (idToDelete != null) {
         AlertHapus(
             onCancel = { idToDelete = null },
             onConfirm = {
                 idToDelete?.let { id ->
-                    // --- PERBAIKANNYA DI SINI ---
-                    // Menggunakan argumen bernama untuk semua parameter yang dibutuhkan
                     viewModel.deleteSaran(
                         id = id,
                         onSuccess = {
-                            // Setelah sukses delete dari API, refresh list
-                            viewModel.getSaran()
+                            viewModel.getSaran() // Refresh list setelah hapus
                         },
                         onError = { errorMessage ->
-                            // TODO: Tampilkan pesan error ke pengguna, misalnya dengan Toast atau Snackbar
                             println("Error deleting saran: $errorMessage")
                         }
                     )
-                    // --------------------------
                 }
                 idToDelete = null
             }
@@ -132,11 +147,11 @@ fun SaranScreen(
     }
 }
 
-// === FUNGSI YANG BARU DITAMBAHKAN ===
 @Composable
 fun ListSaranContent(
     list: List<SaranResponse>,
-    onDeleteRequest: (Int) -> Unit
+    onDeleteRequest: (Int) -> Unit,
+    onEditRequest: (SaranResponse) -> Unit
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -145,21 +160,18 @@ fun ListSaranContent(
         items(list, key = { it.idSaran ?: -1 }) { saran ->
             SaranItem(
                 saran = saran,
-                onDeleteClick = {
-                    saran.idSaran?.let { id ->
-                        onDeleteRequest(id)
-                    }
-                }
+                onDeleteClick = { saran.idSaran?.let { id -> onDeleteRequest(id) } },
+                onEditClick = { onEditRequest(saran) }
             )
         }
     }
 }
 
-// === FUNGSI YANG BARU DITAMBAHKAN ===
 @Composable
 fun SaranItem(
     saran: SaranResponse,
-    onDeleteClick: () -> Unit
+    onDeleteClick: () -> Unit,
+    onEditClick: () -> Unit
 ) {
     val darkBlue = Color(0xFF003366)
 
@@ -198,7 +210,7 @@ fun SaranItem(
             }
             Spacer(modifier = Modifier.width(16.dp))
             Row {
-                IconButton(onClick = { /* TODO: Implementasi edit */ }) {
+                IconButton(onClick = onEditClick) {
                     Icon(
                         imageVector = Icons.Default.Edit,
                         contentDescription = "Edit Saran",
@@ -217,14 +229,11 @@ fun SaranItem(
     }
 }
 
-
-// Ubah nama AlertBottomContentPreview menjadi AlertHapus agar lebih jelas
 @Composable
 fun AlertHapus(
     onCancel: () -> Unit,
     onConfirm: () -> Unit
 ) {
-    // Overlay semi-transparan
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -272,7 +281,7 @@ fun AlertHapus(
             )
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(
-                    onClick = onConfirm, // Langsung panggil onConfirm
+                    onClick = onConfirm,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFFF9800),
                         contentColor = Color.White
@@ -285,7 +294,7 @@ fun AlertHapus(
                     Text("Ya, Hapus", fontSize = 16.sp, fontWeight = FontWeight.Medium)
                 }
                 OutlinedButton(
-                    onClick = onCancel, // Langsung panggil onCancel
+                    onClick = onCancel,
                     border = BorderStroke(1.dp, Color(0xFFFF9800)),
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
@@ -296,32 +305,5 @@ fun AlertHapus(
                 }
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewSaranScreen() {
-    SitanggappTheme {
-        SaranScreen()
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewSaranItem() {
-    SitanggappTheme {
-        SaranItem(
-            saran = SaranResponse(1, "Lampu Merah Padam di Perempatan", "Lampu merah di perempatan ABC sudah padam selama 2 hari dan menyebabkan kemacetan parah."),
-            onDeleteClick = {}
-        )
-    }
-}
-
-@Preview
-@Composable
-fun PreviewAlertHapus() {
-    SitanggappTheme {
-        AlertHapus(onCancel = {}, onConfirm = {})
     }
 }

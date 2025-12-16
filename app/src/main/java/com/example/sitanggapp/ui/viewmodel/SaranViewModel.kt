@@ -2,7 +2,9 @@ package com.example.sitanggapp.ui.viewmodel
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-
+import androidx.lifecycle.viewModelScope
+import okhttp3.MultipartBody
+import kotlinx.coroutines.launch
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import com.example.sitanggapp.data.remote.response.SaranResponse
@@ -10,7 +12,6 @@ import com.example.sitanggapp.data.repository.SaranRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -79,6 +80,29 @@ class SaranViewModel(private val repository: SaranRepository) : ViewModel() {
                 // Di sini sebaiknya panggil ulang fungsi fetchSaran() agar list diperbarui otomatis
             } catch (e: Exception) {
                 onError(e.message ?: "Gagal menghapus saran")
+            }
+        }
+    }
+
+    // Fungsi untuk mengedit saran
+    fun updateSaran(
+        id: Int,
+        judul: String,
+        deskripsi: String,
+        latitude: String?,
+        longitude: String?,
+        foto: MultipartBody.Part?
+    ) {
+        viewModelScope.launch {
+            try {
+                // Pastikan repository.updateSaran sudah diperbaiki sesuai langkah sebelumnya
+                repository.updateSaran(id, judul, deskripsi, latitude, longitude, foto)
+
+                // Opsional: Beritahu UI bahwa update berhasil (misalnya lewat LiveData/StateFlow)
+                // _updateResult.value = Result.Success(...)
+            } catch (e: Exception) {
+                // Handle error
+                // _updateResult.value = Result.Error(e.message)
             }
         }
     }

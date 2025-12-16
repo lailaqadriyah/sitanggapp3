@@ -9,6 +9,7 @@ import com.example.sitanggapp.screens.component.HomeScreen
 import com.example.sitanggapp.screens.saran.CreateSaranScreen
 import com.example.sitanggapp.screens.pengaduan.CreatePengaduanScreen
 import com.example.sitanggapp.screens.profile.TampilanProfile
+import com.example.sitanggapp.screens.saran.EditSaranScreen
 import com.example.sitanggapp.screens.saran.SaranScreen
 import com.example.sitanggapp.ui.viewmodel.ViewModelFactory
 
@@ -24,9 +25,32 @@ fun AppNavGraph(
         modifier = modifier
     ) {
         composable("home") { HomeScreen() }
-        composable("pengaduan") { CreatePengaduanScreen()}
-        composable("saran") { CreateSaranScreen(modifier, navController= navController, viewModelFactory = viewModelFactory) }
-        composable("profile") { TampilanProfile(navController) }
-        composable("listsaran") { SaranScreen() }
+        composable("pengaduan") { 
+            CreatePengaduanScreen()
+        }
+        composable("saran") { 
+            SaranScreen(navController = navController)
+        }
+        composable("tambahsaran") { 
+            CreateSaranScreen(
+                modifier = modifier,
+                navController = navController,
+                saranId = 0,
+                viewModelFactory = viewModelFactory
+            )
+        }
+        composable("profile") { 
+            TampilanProfile(navController) 
+        }
+        composable("editsaran/{saranId}") { backStackEntry ->
+            EditSaranScreen(
+                modifier = modifier,
+                navController = navController,
+                saranId = backStackEntry.arguments?.getString("saranId") ?: "0",
+                existingData = emptyMap(),
+                viewModelFactory = viewModelFactory
+            )
+        }
+
     }
 }

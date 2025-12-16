@@ -3,56 +3,71 @@ package com.example.sitanggapp.screens.saran
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.sitanggapp.ui.viewmodel.SaranViewModel
 import com.example.sitanggapp.ui.viewmodel.ViewModelFactory
-import kotlinx.coroutines.flow.callbackFlow
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.sitanggapp.ui.theme.SitanggappTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateSaranScreen(
+fun EditSaranScreen(
     modifier: Modifier = Modifier,
-    navController: NavController?,
-    saranId: Int,
+    navController: NavController? = null,
+    saranId: String, // ID untuk mengambil data yang akan diedit
+    existingData: Map<String, String>, // Data yang ada untuk diedit
     viewModelFactory: ViewModelFactory
 ) {
-    val existingData = if (saranId != 0) {
-        mapOf(
-            "jenisMasalah" to "Lampu Jalan Mati",
-            "tanggal" to "27 Oktober 2025",
-            "deskripsi" to "Lampu jalan di depan kampus padam sejak 3 hari lalu"
-        )
-    } else null
-    var jenisMasalah by remember { mutableStateOf(existingData?.get("jenisMasalah") ?: "") }
-    var tanggal by remember { mutableStateOf(existingData?.get("tanggal") ?: "") }
-    var deskripsi by remember { mutableStateOf(existingData?.get("deskripsi") ?: "") }
+    var jenisMasalah by remember { mutableStateOf(existingData["jenisMasalah"] ?: "") }
+    var tanggal by remember { mutableStateOf(existingData["tanggal"] ?: "") }
+    var deskripsi by remember { mutableStateOf(existingData["deskripsi"] ?: "") }
 
     val viewModel: SaranViewModel = viewModel(factory = viewModelFactory)
 
     val scrollState = rememberScrollState()
-    val callback: () -> Unit = {
-        navController?.navigate("listsaran") {
-            popUpTo("listsaran") { inclusive = true }
-        }
-    }
     val darkBlue = Color(0xFF003366)
     val orange = Color(0xFFFF9800)
     val borderColor = Color(0xFFE0E0E0)
@@ -62,7 +77,7 @@ fun CreateSaranScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        if (saranId != 0) "Edit Saran" else "Aspirasi dan Saran",
+                        "Edit Saran",
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 18.sp,
                         color = Color.Black
@@ -82,6 +97,7 @@ fun CreateSaranScreen(
         },
         containerColor = Color.White
     ) { paddingValues ->
+
         Column(
             modifier = modifier
                 .fillMaxSize()
@@ -267,18 +283,16 @@ fun CreateSaranScreen(
             // Tombol Kirim
             Button(
                 onClick = {
-                    viewModel.uploadSaran(
+                    // Kirim data yang telah diperbarui ke API untuk disimpan
+                    viewModel.updateSaran(
+                        id = saranId.toInt(),
                         judul = jenisMasalah,
                         deskripsi = deskripsi,
                         latitude = null,
                         longitude = null,
-                        foto = null,
-                        navController = navController
+                        foto = null
                     )
-                    // Navigate to ListSaran screen
-                    navController?.navigate("saran") {
-                        popUpTo("saran") { inclusive = true }
-                    }
+                    navController?.popBackStack() // Kembali setelah data diperbarui
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = orange),
                 shape = RoundedCornerShape(8.dp),
@@ -287,7 +301,7 @@ fun CreateSaranScreen(
                     .height(52.dp)
             ) {
                 Text(
-                    "Kirim Laporan",
+                    "Simpan Perubahan",
                     color = Color.White,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
@@ -295,6 +309,27 @@ fun CreateSaranScreen(
             }
         }
     }
-
 }
+@Preview(showBackground = true)
+@Composable
+fun EditSaranScreenPreview() {
+    SitanggappTheme {
+        // Data dummy untuk simulasi tampilan edit
+        val dummyData = mapOf(
+            "jenisMasalah" to "Lampu Jalan Rusak",
+            "tanggal" to "12 Oktober 2025",
+            "deskripsi" to "Lampu di perempatan jalan mawar mati total, sangat gelap saat malam hari."
+        )
 
+        // Menggunakan LocalContext untuk mendapatkan instance factory
+        // Catatan: Pada preview mode, fungsi ViewModel mungkin tidak berjalan sempurna
+        // tanpa mocking repository, tapi ini cukup untuk melihat tampilan UI.
+        val context = LocalContext.current
+
+        EditSaranScreen(
+            saranId = "1", // ID Dummy
+            existingData = dummyData,
+            viewModelFactory = ViewModelFactory.getInstance(context)
+        )
+    }
+}
