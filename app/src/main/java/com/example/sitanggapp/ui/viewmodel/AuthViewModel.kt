@@ -13,38 +13,38 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class AuthViewModel(private val repository: UserRepository) : ViewModel() {
-
-    private val _loginState = MutableStateFlow<UiState<String>>(UiState.Idle)
+    private val _loginState = MutableStateFlow<UiState<String>>(UiState.Loading)
     val loginState: StateFlow<UiState<String>> = _loginState.asStateFlow()
-
-    private val _registerState = MutableStateFlow<UiState<String>>(UiState.Idle)
+ 
+    private val _registerState = MutableStateFlow<UiState<String>>(UiState.Loading)
     val registerState: StateFlow<UiState<String>> = _registerState.asStateFlow()
-
-    fun login(email: String, password: String, context: Context) {
-        viewModelScope.launch {
-            _loginState.value = UiState.Loading
-            try {
-                val response = repository.login(email, password)
-                if (!response.error) {
-                    val intent = Intent(context, MainActivity::class.java)
-
-                    val user = UserModel(
-                        email = email,
-                        token = response.loginResult.token,
-                        isLogin = true
-                    )
-
-                    repository.saveSession(user)
-                    _loginState.value = UiState.Success("Login successful")
-                    context.startActivity(intent)
-                } else {
-                    _loginState.value = UiState.Error(response.message)
-                }
-            } catch (e: Exception) {
-                _loginState.value = UiState.Error(e.message ?: "Unknown error occurred")
+ 
+fun login(email: String, password: String, context: Context) {
+    viewModelScope.launch {
+        _loginState.value = UiState.Loading
+        try {
+            val response = repository.login(email, password)
+            if (!response.error) {
+                val intent = Intent(context, MainActivity::class.java)
+                val user = UserModel(
+                    email = email,
+                    token = response.loginResult.token,
+                    isLogin = true
+                )
+                repository.saveSession(user)
+                _loginState.value = UiState.Success(
+                    data = "Login successful",
+                    message = "Login berhasil"
+                )
+                context.startActivity(intent)
+            } else {
+                _loginState.value = UiState.Error(response.message)
             }
+        } catch (e: Exception) {
+            _loginState.value = UiState.Error(e.message ?: "Unknown error occurred")
         }
     }
+}
 
     fun register(name: String, email: String, password: String) {
         viewModelScope.launch {

@@ -63,6 +63,19 @@ dependencies {
     // Image Loading
     implementation(libs.coil.compose)
 
+    // CameraX
+    val camerax_version = "1.3.3"
+    implementation("androidx.camera:camera-camera2:${camerax_version}")
+    implementation("androidx.camera:camera-lifecycle:${camerax_version}")
+    implementation("androidx.camera:camera-view:${camerax_version}")
+
+    // Accompanist Permissions
+    implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+
+    // Image Picker
+    implementation("com.github.skydoves:landscapist-glide:2.3.4")
+    implementation("com.github.dhaval2404:imagepicker:2.1")
+
     // DataStore
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.runtime.livedata)

@@ -1,32 +1,53 @@
 package com.example.sitanggapp.screens.saran
 
+import android.Manifest
+import android.net.Uri
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
+import com.example.sitanggapp.R
 import com.example.sitanggapp.ui.viewmodel.SaranViewModel
 import com.example.sitanggapp.ui.viewmodel.ViewModelFactory
-import kotlinx.coroutines.flow.callbackFlow
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Objects
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun CreateSaranScreen(
     modifier: Modifier = Modifier,
@@ -34,6 +55,50 @@ fun CreateSaranScreen(
     saranId: Int,
     viewModelFactory: ViewModelFactory
 ) {
+    val context = LocalContext.current
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var capturedImageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+    
+    // Permission states
+    val cameraPermissionState = rememberPermissionState(
+        Manifest.permission.CAMERA
+    )
+    
+    val storagePermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Manifest.permission.READ_MEDIA_IMAGES
+    } else {
+        Manifest.permission.READ_EXTERNAL_STORAGE
+    }
+    
+    val storagePermissionState = rememberPermissionState(storagePermission)
+    
+    // Create a temp file to store the captured image
+    val photoFile = remember { 
+        File.createTempFile(
+            "IMG_", 
+            ".jpg", 
+            context.externalCacheDir
+        )
+    }
+    
+    // Launcher for taking a photo
+    val takePhotoLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = { success ->
+            if (success) {
+                imageUri = Uri.fromFile(photoFile)
+            }
+        }
+    )
+    
+    // Launcher for picking an image from gallery
+    val pickImageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri ->
+            uri?.let { imageUri = it }
+        }
+    )
+    
     val existingData = if (saranId != 0) {
         mapOf(
             "jenisMasalah" to "Lampu Jalan Mati",
@@ -41,6 +106,7 @@ fun CreateSaranScreen(
             "deskripsi" to "Lampu jalan di depan kampus padam sejak 3 hari lalu"
         )
     } else null
+    
     var jenisMasalah by remember { mutableStateOf(existingData?.get("jenisMasalah") ?: "") }
     var tanggal by remember { mutableStateOf(existingData?.get("tanggal") ?: "") }
     var deskripsi by remember { mutableStateOf(existingData?.get("deskripsi") ?: "") }
@@ -170,12 +236,62 @@ fun CreateSaranScreen(
                     color = Color.Black,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
+                
+                // Display selected image
+                imageUri?.let { uri ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.LightGray.copy(alpha = 0.2f))
+                            .border(1.dp, borderColor, RoundedCornerShape(8.dp))
+                    ) {
+                        Image(
+                            painter = rememberAsyncImagePainter(uri),
+                            contentDescription = "Foto yang dipilih",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                        
+                        // Remove image button
+                        IconButton(
+                            onClick = { 
+                                imageUri = null
+                                capturedImageBitmap = null
+                            },
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(8.dp)
+                                .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_close),
+                                contentDescription = "Hapus foto",
+                                tint = Color.White
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
+                    // Take Photo Button
                     OutlinedButton(
-                        onClick = { /* TODO: Ambil foto */ },
+                        onClick = {
+                            if (cameraPermissionState.status.isGranted) {
+                                val photoUri = Uri.fromFile(photoFile)
+                                takePhotoLauncher.launch(photoUri)
+                            } else {
+                                cameraPermissionState.launchPermissionRequest()
+                            }
+                        },
                         modifier = Modifier
                             .weight(1f)
                             .height(48.dp),
@@ -186,11 +302,24 @@ fun CreateSaranScreen(
                         shape = RoundedCornerShape(8.dp),
                         border = BorderStroke(1.dp, borderColor)
                     ) {
+                        Icon(
+                            imageVector = Icons.Default.CameraAlt,
+                            contentDescription = "Ambil Foto",
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text("Ambil Foto", fontSize = 14.sp)
                     }
 
+                    // Pick from Gallery Button
                     OutlinedButton(
-                        onClick = { /* TODO: Pilih dari galeri */ },
+                        onClick = {
+                            if (storagePermissionState.status.isGranted) {
+                                pickImageLauncher.launch("image/*")
+                            } else {
+                                storagePermissionState.launchPermissionRequest()
+                            }
+                        },
                         modifier = Modifier
                             .weight(1f)
                             .height(48.dp),
